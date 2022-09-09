@@ -1,29 +1,30 @@
 package com.apz;
 
+import com.dyngr.Polling;
+import com.dyngr.exception.PollerStoppedException;
 import com.github.rvesse.airline.HelpOption;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
 import com.github.rvesse.airline.annotations.restrictions.RequireOnlyOne;
+import com.github.rvesse.airline.annotations.restrictions.RequireSome;
 import com.github.rvesse.airline.annotations.restrictions.RequiredOnlyIf;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.inject.Inject;
-import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Optional;
 import java.util.Properties;
 
+import static java.lang.Integer.MAX_VALUE;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static oracle.jdbc.OracleConnection.CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT;
 
 @Command(name = "oracle-jdbc-test", description = "A simple command line application to test JDBC connection to Oracle Database.")
 public class JdbcConnectionTestCommand implements Runnable {
 
     private static final Logger logger = LogManager.getLogger(JdbcConnectionTestCommand.class);
-    private static final String SELECT_SYSDATE_FROM_DUAL = "select sysdate from dual";
 
     @Inject
     public HelpOption<JdbcConnectionTestCommand> helpOption;
@@ -74,14 +75,42 @@ public class JdbcConnectionTestCommand implements Runnable {
             title = "database name")
     protected String databaseName;
 
+    @Option(name = "--wait-periodly",
+            description = "Waits with a fixed interval in seconds.",
+            title = "interval")
+    protected int waitPeriodly = 10;
+
+    @Option(name = "--stop-after-attempt",
+            description = "Stops after N failed attempts.",
+            title = "number of attempts")
+    @RequireSome(tag = "stop-after")
+    protected int stopAfterAttempt = MAX_VALUE;
+
+    @Option(name = "--stop-after-delay",
+            description = "Stops after a given delay in seconds.",
+            title = "timeout")
+    @RequireSome(tag = "stop-after")
+    protected int stopAfterDelay = MAX_VALUE;
+
     public void run() {
         if (helpOption.showHelpIfRequested()) {
             return;
         }
 
         final OracleDataSource oracleDataSource = oracleDataSource();
+        final JdbcConnectionAttemptMaker jdbcConnectionAttemptMaker = new JdbcConnectionAttemptMaker(oracleDataSource);
 
-        makeConnectionAttempt(oracleDataSource);
+        try {
+            Polling.waitPeriodly(waitPeriodly, SECONDS)
+                    .stopAfterAttempt(stopAfterAttempt)
+                    .stopAfterDelay(stopAfterDelay, SECONDS)
+                    .run(jdbcConnectionAttemptMaker);
+            logger.info("JDBC connection test successful!");
+
+        } catch (final PollerStoppedException e) {
+            logger.error("JDBC connection test failed!");
+            System.exit(1);
+        }
     }
 
     private OracleDataSource oracleDataSource() {
@@ -105,24 +134,6 @@ public class JdbcConnectionTestCommand implements Runnable {
             logger.error("Error creating oracle data source: {}", e.getMessage());
             System.exit(1);
             return null;
-        }
-    }
-
-    private static void makeConnectionAttempt(final OracleDataSource oracleDataSource) {
-        logger.debug("Running SQL query: [{}]", SELECT_SYSDATE_FROM_DUAL);
-
-        try (final Connection connection = oracleDataSource.getConnection();
-             final Statement statement = connection.createStatement();
-             final ResultSet resultSet = statement.executeQuery(SELECT_SYSDATE_FROM_DUAL)) {
-
-            while (resultSet.next()) {
-                logger.debug("Result of SQL query: [{}]", resultSet.getString(1));
-            }
-
-            logger.info("JDBC connection test successful!");
-
-        } catch (final SQLException e) {
-            logger.warn("Exception occurred connecting to {}: {}", "oracleDataSource.getURL()", e.getMessage());
         }
     }
 }
