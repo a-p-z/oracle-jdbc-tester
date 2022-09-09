@@ -52,7 +52,6 @@ public class JdbcConnectionTestCommand implements Runnable {
             title = "timeout")
     protected int transportConnectTimeout = 0;
 
-
     @Option(name = {"--hostname", "--host", "--server-name", "--server"},
             description = "Name of the database server.",
             title = "server name")
