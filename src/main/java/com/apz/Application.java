@@ -1,3 +1,5 @@
+package com.apz;
+
 import oracle.jdbc.OracleConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -7,9 +9,9 @@ import java.sql.*;
 import java.util.Properties;
 
 @SpringBootApplication
-public class Main {
+public class Application {
 
-    final static Logger LOG = LoggerFactory.getLogger(Main.class);
+    final static Logger LOG = LoggerFactory.getLogger(Application.class);
 
     public static void main(String[] args) throws ClassNotFoundException {
 
