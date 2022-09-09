@@ -1,6 +1,6 @@
 # oracle-jdbc-tester
 
-[![Maven Build](https://github.com/aimtiaz11/oracle-jdbc-tester/actions/workflows/maven.yml/badge.svg)](https://github.com/aimtiaz11/oracle-jdbc-tester/actions/workflows/maven.yml)
+[![Maven Build](https://github.com/a-p-z/oracle-jdbc-tester/actions/workflows/maven.yml/badge.svg)](https://github.com/a-p-z/oracle-jdbc-tester/actions/workflows/maven.yml)
 
 A simple command line application to test JDBC connection to Oracle Database.
 
@@ -17,7 +17,7 @@ Alternatively, download the JAR file from [release](https://github.com/aimtiaz11
 Execute the JAR file with the following 3 parameters with schema name, password and JDBC connection string:
 
 ```sh
-java -jar target/jdbc-tester-1.1.jar <schema_name> <schema_password> jdbc:oracle:thin:@//<host>:<port>/<SID>
+java -jar target/oracle-jdbc-tester-1.1.jar <schema_name> <schema_password> jdbc:oracle:thin:@//<host>:<port>/<SID>
 ```
 
 ### Secure your credentials
@@ -28,7 +28,7 @@ This prevents DB credentials being stored in `~/.bash_history`.
 
 
 ```sh
-java -jar target/jdbc-tester-1.1.jar "$DB_USER" "$DB_PASS" jdbc:oracle:thin:@//<host>:<port>/<SID>
+java -jar target/oracle-jdbc-tester-1.1.jar "$DB_USER" "$DB_PASS" jdbc:oracle:thin:@//<host>:<port>/<SID>
 ```
 
 ## How it works

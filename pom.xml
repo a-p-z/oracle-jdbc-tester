@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.aimtiaz</groupId>
-    <artifactId>jdbc-tester</artifactId>
+    <groupId>com.apz</groupId>
+    <artifactId>oracle-jdbc-tester</artifactId>
     <version>1.1</version>
     <packaging>jar</packaging>
 
@@ -28,11 +28,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.oracle</groupId>
+            <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>ojdbc6</artifactId>
-            <version>11.2.0</version>
-            <scope>system</scope>
-            <systemPath>${basedir}/src/main/lib/ojdbc6-11.2.0.jar</systemPath>
+            <version>11.2.0.4</version>
         </dependency>
 
     </dependencies>
