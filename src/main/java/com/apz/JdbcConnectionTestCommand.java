@@ -3,7 +3,6 @@ package com.apz;
 import com.github.rvesse.airline.HelpOption;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
-import com.github.rvesse.airline.annotations.restrictions.RequireOnlyOne;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,7 +29,6 @@ public class JdbcConnectionTestCommand implements Runnable {
     @Option(name = {"--url"},
             description = "URL of the database connection string..",
             title = "url")
-    @RequireOnlyOne(tag = "url/params")
     protected String url;
 
     @Option(name = {"--username", "--user", "-u"},
@@ -42,6 +40,13 @@ public class JdbcConnectionTestCommand implements Runnable {
             description = "Password for the connecting user.",
             title = "password")
     protected String password;
+
+    @Option(name = "--transport-connect-timeout",
+            description = "The connect timeout controls how much time is allowed to connect the socket to the database. Successfully connecting the socket doesn't necessarily mean that the database service is up but it means that the listener is accepting connections.\n" +
+                    "This value is in seconds.\n" +
+                    "Default value is \"0\" (no timeout).",
+            title = "timeout")
+    protected int transportConnectTimeout = 0;
 
     public void run() {
         if (helpOption.showHelpIfRequested()) {
@@ -56,7 +61,7 @@ public class JdbcConnectionTestCommand implements Runnable {
 
     private OracleDataSource oracleDataSource() {
         final Properties properties = new Properties();
-        properties.setProperty(CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, Integer.toString(10000));
+        properties.setProperty(CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, Integer.toString(transportConnectTimeout));
 
         try {
             final OracleDataSource oracleDataSource = new OracleDataSource();
