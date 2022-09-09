@@ -3,6 +3,8 @@ package com.apz;
 import com.github.rvesse.airline.HelpOption;
 import com.github.rvesse.airline.annotations.Command;
 import com.github.rvesse.airline.annotations.Option;
+import com.github.rvesse.airline.annotations.restrictions.RequireOnlyOne;
+import com.github.rvesse.airline.annotations.restrictions.RequiredOnlyIf;
 import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,6 +31,7 @@ public class JdbcConnectionTestCommand implements Runnable {
     @Option(name = {"--url"},
             description = "URL of the database connection string..",
             title = "url")
+    @RequireOnlyOne(tag = "url/params")
     protected String url;
 
     @Option(name = {"--username", "--user", "-u"},
@@ -48,6 +51,29 @@ public class JdbcConnectionTestCommand implements Runnable {
             title = "timeout")
     protected int transportConnectTimeout = 0;
 
+
+    @Option(name = {"--hostname", "--host", "--server-name", "--server"},
+            description = "Name of the database server.",
+            title = "server name")
+    @RequireOnlyOne(tag = "url/params")
+    protected String serverName = "";
+
+    @RequiredOnlyIf(names = {"--hostname", "--host", "--server-name", "--server"})
+    @Option(name = {"--port-number", "--port"},
+            description = "Number of the port where the server listens for requests.",
+            title = "port number")
+    protected Integer portNumber;
+
+    @Option(name = {"--service-name", "--service"},
+            description = "Specifies the database service name for this data source.",
+            title = "service name")
+    protected String serviceName;
+
+    @Option(name = {"--database-name", "--sid"},
+            description = "Name of the particular database on the server. Also known as the SID in Oracle terminology.",
+            title = "database name")
+    protected String databaseName;
+
     public void run() {
         if (helpOption.showHelpIfRequested()) {
             return;
@@ -58,7 +84,6 @@ public class JdbcConnectionTestCommand implements Runnable {
         makeConnectionAttempt(oracleDataSource);
     }
 
-
     private OracleDataSource oracleDataSource() {
         final Properties properties = new Properties();
         properties.setProperty(CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, Integer.toString(transportConnectTimeout));
@@ -67,7 +92,11 @@ public class JdbcConnectionTestCommand implements Runnable {
             final OracleDataSource oracleDataSource = new OracleDataSource();
             oracleDataSource.setConnectionProperties(properties);
             oracleDataSource.setDriverType("thin");
+            Optional.ofNullable(databaseName).ifPresent(dn -> oracleDataSource.setDatabaseName(databaseName));
             Optional.ofNullable(password).ifPresent(p -> oracleDataSource.setPassword(password));
+            Optional.ofNullable(portNumber).ifPresent(pn -> oracleDataSource.setPortNumber(portNumber));
+            Optional.ofNullable(serverName).ifPresent(sn -> oracleDataSource.setServerName(serverName));
+            Optional.ofNullable(serviceName).ifPresent(sn -> oracleDataSource.setServiceName(serviceName));
             Optional.ofNullable(url).ifPresent(u -> oracleDataSource.setURL(url));
             Optional.ofNullable(user).ifPresent(u -> oracleDataSource.setUser(user));
             return oracleDataSource;
