@@ -1,43 +1,39 @@
 package com.apz;
 
-import oracle.jdbc.OracleConnection;
+import oracle.jdbc.pool.OracleDataSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 import java.util.Properties;
+
+import static oracle.jdbc.OracleConnection.CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT;
 
 public class Application {
 
     private static final Logger logger = LogManager.getLogger(Application.class);
 
-    public static void main(String[] args) throws ClassNotFoundException {
+    public static void main(String[] args) {
 
         for (int i = 0; i < args.length; i++) {
             logger.info("arg {} = {}", i, args[i]);
         }
 
-        Class.forName("oracle.jdbc.driver.OracleDriver");
-
         if (args.length != 3) {
             logger.error("Invalid number of arguments: Must provide 3 arguments in the format: <schema_name> <schema_password> jdbc:oracle:thin:@//<host>:<port>/<SID>");
             return;
         }
-
-        Properties properties = new Properties();
-        properties.setProperty("user", args[0]);
-        properties.setProperty("password", args[1]);
-        properties.setProperty(OracleConnection.CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, "10000");
+        final OracleDataSource oracleDataSource = oracleDataSource(args[0], args[1], args[2], 10000);
 
         try {
             logger.info("****** Starting JDBC Connection test *******");
             String sqlQuery = "select sysdate from dual";
 
-            Connection conn = DriverManager.getConnection(args[2], properties);
+            Connection conn = oracleDataSource.getConnection();
             conn.setAutoCommit(false);
             Statement statement = conn.createStatement();
             logger.info("Running SQL query: [{}]", sqlQuery);
@@ -53,6 +49,26 @@ public class Application {
             logger.info("JDBC connection test successful!");
         } catch (SQLException ex) {
             logger.error("Exception occurred connecting to database: {}", ex.getMessage());
+        }
+    }
+
+    private static OracleDataSource oracleDataSource(final String user, final String password, final String url, final int transportConnectTimeout) {
+        final Properties properties = new Properties();
+        properties.setProperty(CONNECTION_PROPERTY_THIN_NET_CONNECT_TIMEOUT, Integer.toString(transportConnectTimeout));
+
+        try {
+            final OracleDataSource oracleDataSource = new OracleDataSource();
+            oracleDataSource.setConnectionProperties(properties);
+            oracleDataSource.setDriverType("thin");
+            Optional.ofNullable(password).ifPresent(p -> oracleDataSource.setPassword(password));
+            Optional.ofNullable(url).ifPresent(u -> oracleDataSource.setURL(url));
+            Optional.ofNullable(user).ifPresent(u -> oracleDataSource.setUser(user));
+            return oracleDataSource;
+
+        } catch (final SQLException e) {
+            logger.error("Error creating oracle data source: {}", e.getMessage());
+            System.exit(1);
+            return null;
         }
     }
 }
