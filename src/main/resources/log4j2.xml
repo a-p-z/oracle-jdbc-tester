@@ -1,0 +1,12 @@
+<Configuration>
+    <Appenders>
+        <Console name="console" target="SYSTEM_OUT">
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info" additivity="false">
+            <AppenderRef ref="console" />
+        </Root>
+    </Loggers>
+</Configuration>
